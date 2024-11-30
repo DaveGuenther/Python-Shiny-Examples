@@ -10,6 +10,7 @@
 import pandas as pd
 from shiny import App, ui, render, reactive
 from pathlib import Path
+import browser_tools # see get_browser_resolution example in this repository for reprex
 import pill_module
 
 # Data pulled from Wikipedia
@@ -30,32 +31,52 @@ df_NES = pd.DataFrame({
 })
 
 app_ui = ui.page_fluid(
+    browser_tools.get_browser_res(),
     ui.tags.link(href='styles.css', rel="stylesheet"),
-    ui.row(
-        ui.column(3,
-            [pill_module.module_ui(id=game_id, song_name=game_name) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])],                  
-        ),
-        ui.column(9,
-            ui.div(
-                ui.h2("About This Game:"),
-                ui.div("Name:").add_class('main-content-title'),
-                ui.output_text(id='txtName').add_class('main-content-body'),
-                ui.div("Year:").add_class('main-content-title'),
-                ui.output_text(id='txtYear').add_class('main-content-body'),
-                ui.div("Genre:").add_class('main-content-title'),
-                ui.output_text(id='txtGenre').add_class('main-content-body'),            
-                ui.div("Description:").add_class('main-content-title'),
-                ui.output_text(id='txtDescription').add_class('main-content-body'),    
-            ),        
-        ).add_class('red'),
-    ).add_class('blue'),
+    ui.div(
+        ui.row(
+            ui.column(3,
+                [pill_module.module_ui(id=game_id, song_name=game_name) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])],  
+                id="desktop-ui-placeholder"                
+            ),
+            ui.column(9,
+                ui.div(
+                    ui.h2("About This Game:"),
+                    ui.div("Name:").add_class('main-content-title'),
+                    ui.output_text(id='txtName').add_class('main-content-body'),
+                    ui.div("Year:").add_class('main-content-title'),
+                    ui.output_text(id='txtYear').add_class('main-content-body'),
+                    ui.div("Genre:").add_class('main-content-title'),
+                    ui.output_text(id='txtGenre').add_class('main-content-body'),            
+                    ui.div("Description:").add_class('main-content-title'),
+                    ui.output_text(id='txtDescription').add_class('main-content-body'),    
+                ),        
+            ).add_class('red'),
+        ).add_class('blue'),
+        id='wide-placeholder'
+    ),
 )
 
+
 def server(input, output, session):
+    # browser_resolution_stuff
+    browser_res = reactive.value(None)
+    @reactive.effect
+    @reactive.event(input.dimension) # updates every time the browser dimensions change
+    def set_browser_resolution():
+        browser_res.set(input.dimension())
+
+    # state info about what is currently selected
     selected_game=reactive.value(None)
 
-
     [pill_module.module_server(id=game_id, song_id=game_id, selected_game=selected_game) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])]
+
+
+    @reactive.effect
+    @reactive.event(input.browser_res)
+    def render_body():
+        
+
 
     @reactive.calc
     def get_game_record_from_id():
