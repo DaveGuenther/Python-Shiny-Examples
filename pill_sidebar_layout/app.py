@@ -12,6 +12,7 @@ from shiny import App, ui, render, reactive
 from pathlib import Path
 import pill_module
 
+# Data pulled from Wikipedia
 df_NES = pd.DataFrame({
     'id':['0','1','2','3','4','5','6'],
     'Name':['Faxanadu','Metroid','Final Fantasy','Super Mario Bros. 3','The Legend of Zelda','Contra','Tetris'],
