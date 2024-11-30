@@ -1,11 +1,9 @@
-# Shiny app for a custom "selectize" data viewer with selectable pills on the left and form data for the selected element on the right
-
-# This shiny app demonstrated how to pass reactive values into shiny modules (buttons in a column in this case) and then update that reactive value 
-# from within the module thereby kicking off the parent server function to use that data somehow.  In this case the app passes in a selected_game reactive value
-# that represents a value from the 'id' column of the df_NES dataframe.  A button is created (as a shiny module) for each row in the df_NES['Name'] column.  
-# Once a button is clicked, it's reactive effect/event updates the selected_item reactive value from the parent server function with the id value of that game.
-# The parent server function then takes that selected_game reactive and pulls out the respective row of data as a series, rendering it's various column data
-# in the red area on the right of the app window.
+# Shiny app attempts to offer a responsive view that flips between a selectize view for wide desktops and
+# an accordion view for mobile views (view where the window.innerWidth < 700px).  It builds upon previous 
+# examples: get_browser_resolution, and pill_sidebar_layout.
+#
+# Essentially, this view creates a wide AND narrow version of the view (in two separate ways) and then 
+# renders the content using ui.insert_ui/iu.remove_ui with a main placeholder 'dynamic-ui-placeholder'
 
 import pandas as pd
 from shiny import App, ui, render, reactive
@@ -34,29 +32,33 @@ app_ui = ui.page_fluid(
     browser_tools.get_browser_res(),
     ui.tags.link(href='styles.css', rel="stylesheet"),
     ui.div(
-        ui.row(
-            ui.column(3,
-                [pill_module.module_ui(id=game_id, song_name=game_name) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])],  
-                id="desktop-ui-placeholder"                
-            ),
-            ui.column(9,
+        id='dynamic-ui-placeholder'
+    ),
+)
+def make_accordion_panels():
+    ret_val = []
+    for game_id in df_NES['id']:
+        row = df_NES[df_NES['id']==game_id].iloc[0]
+        ret_val.append(
+            ui.accordion_panel(
+                ui.div(
+                    row['Name']
+                ).add_class('green').add_style('width:100%;'),
                 ui.div(
                     ui.h2("About This Game:"),
                     ui.div("Name:").add_class('main-content-title'),
-                    ui.output_text(id='txtName').add_class('main-content-body'),
+                    ui.div(row['Name']).add_class('main-content-body'),
                     ui.div("Year:").add_class('main-content-title'),
-                    ui.output_text(id='txtYear').add_class('main-content-body'),
+                    ui.div(row['Year']).add_class('main-content-body'),
                     ui.div("Genre:").add_class('main-content-title'),
-                    ui.output_text(id='txtGenre').add_class('main-content-body'),            
+                    ui.div(row['Genre']).add_class('main-content-body'),          
                     ui.div("Description:").add_class('main-content-title'),
-                    ui.output_text(id='txtDescription').add_class('main-content-body'),    
-                ),        
-            ).add_class('red'),
-        ).add_class('blue'),
-        id='wide-placeholder'
-    ),
-)
-
+                    ui.div(row['Description']).add_class('main-content-body'),    
+                ).add_class('red'),  
+                value=row['Name'],
+            )
+        )
+    return ret_val
 
 def server(input, output, session):
     # browser_resolution_stuff
@@ -69,14 +71,53 @@ def server(input, output, session):
     # state info about what is currently selected
     selected_game=reactive.value(None)
 
-    [pill_module.module_server(id=game_id, song_id=game_id, selected_game=selected_game) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])]
+    #ser up server modules for widw-view server cards
+    [pill_module.module_server(id='wide_'+game_id, song_id=game_id, selected_game=selected_game) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])]
 
 
     @reactive.effect
-    @reactive.event(input.browser_res)
+    @reactive.event(input.dimension)
     def render_body():
-        
-
+        print(input.dimension())
+        if input.dimension()[0]>=677:
+            ui.remove_ui("#wide-ui-placeholder")
+            ui.remove_ui("#narrow-ui-placeholder")
+            ui.insert_ui(
+                selector=f"#dynamic-ui-placeholder", 
+                where="afterBegin", # nest inside 'dynamic-ui-placeholder' element
+                ui= ui.div(
+                    ui.row(
+                        ui.column(5,
+                            [pill_module.module_ui(id='wide_'+game_id, song_name=game_name) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])],                  
+                        ),
+                        ui.column(7,
+                            ui.div(
+                                ui.h2("About This Game:"),
+                                ui.div("Name:").add_class('main-content-title'),
+                                ui.output_text(id='txtName').add_class('main-content-body'),
+                                ui.div("Year:").add_class('main-content-title'),
+                                ui.output_text(id='txtYear').add_class('main-content-body'),
+                                ui.div("Genre:").add_class('main-content-title'),
+                                ui.output_text(id='txtGenre').add_class('main-content-body'),            
+                                ui.div("Description:").add_class('main-content-title'),
+                                ui.output_text(id='txtDescription').add_class('main-content-body'),    
+                            ),        
+                        ).add_class('red'),
+                    ).add_class('blue'),
+                    id='wide-ui-placeholder'
+                )
+            )
+        else:
+            ui.remove_ui("#narrow-ui-placeholder")
+            ui.remove_ui("#wide-ui-placeholder")
+            ui.insert_ui(
+                selector=f"#dynamic-ui-placeholder", 
+                where="afterBegin", # nest inside 'dynamic-ui-placeholder' element
+                ui= ui.div(
+                    ui.accordion(*make_accordion_panels(), id="acc_single", multiple=False).add_class('green'),
+                    id='narrow-ui-placeholder'
+                )
+            )
 
     @reactive.calc
     def get_game_record_from_id():

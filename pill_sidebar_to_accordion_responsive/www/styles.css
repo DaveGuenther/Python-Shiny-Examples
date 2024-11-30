@@ -31,3 +31,16 @@
     font-size:smaller;
     font-weight: normal;
 }
+
+/* Accordion Styling */
+.accordion-button {
+    background-color:green;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color:green;
+}
+
+.accordion-item {
+    background-color:red;
+}
