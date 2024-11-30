@@ -22,3 +22,12 @@
     font-weight: bold;
 }
 
+.main-content-title {
+    font-weight:bold;
+    
+}
+
+.main-content-body {
+    font-size:smaller;
+    font-weight: normal;
+}
