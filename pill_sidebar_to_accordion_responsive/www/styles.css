@@ -1,0 +1,33 @@
+.red {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+}
+
+.green {
+    background-color: green;
+    color: white;
+    font-weight: bold;
+}
+
+.blue {
+    background-color: blue;
+    color: white;
+    font-weight: bold;
+}
+
+.orange {
+    background-color: orange;
+    color: black;
+    font-weight: bold;
+}
+
+.main-content-title {
+    font-weight:bold;
+    
+}
+
+.main-content-body {
+    font-size:smaller;
+    font-weight: normal;
+}
