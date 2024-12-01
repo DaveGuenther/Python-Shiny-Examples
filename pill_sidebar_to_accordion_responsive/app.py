@@ -75,7 +75,7 @@ def server(input, output, session):
     selected_game=reactive.value(None)
 
     #ser up server modules for widw-view server cards
-    [pill_module.module_server(id='wide_'+game_id, song_id=game_id, selected_game=selected_game) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])]
+    [pill_module.module_server(id='wide_'+game_id, game_id=game_id, selected_game=selected_game) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])]
 
 
     @reactive.effect
@@ -91,7 +91,7 @@ def server(input, output, session):
                 ui= ui.div(
                     ui.row(
                         ui.column(5,
-                            [pill_module.module_ui(id='wide_'+game_id, song_name=game_name) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])],                  
+                            [pill_module.module_ui(id='wide_'+game_id, game_name=game_name) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])],                  
                         ),
                         ui.column(7,
                             ui.div(
