@@ -32,8 +32,11 @@ app_ui = ui.page_fluid(
     browser_tools.get_browser_res(),
     ui.tags.link(href='styles.css', rel="stylesheet"),
     ui.div(
-        id='dynamic-ui-placeholder'
-    ),
+        ui.div(
+            id='dynamic-ui-placeholder'
+        ),
+        id='horizontal-flex'
+    )
 )
 def make_accordion_panels():
     ret_val = []
