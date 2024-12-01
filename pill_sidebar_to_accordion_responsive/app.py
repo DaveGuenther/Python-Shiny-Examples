@@ -79,10 +79,9 @@ def server(input, output, session):
 
 
     @reactive.effect
-    @reactive.event(input.dimension)
+    @reactive.event(browser_res)
     def render_body():
-        print(input.dimension())
-        if input.dimension()[0]>=677:
+        if browser_res()[0]>=677:
             ui.remove_ui("#wide-ui-placeholder")
             ui.remove_ui("#narrow-ui-placeholder")
             ui.insert_ui(
