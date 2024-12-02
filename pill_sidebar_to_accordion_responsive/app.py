@@ -9,7 +9,7 @@ import pandas as pd
 from shiny import App, ui, render, reactive
 from pathlib import Path
 import browser_tools # see get_browser_resolution example in this repository for reprex
-import pill_module
+import shiny_modules
 
 # Data pulled from Wikipedia
 df_NES = pd.DataFrame({
@@ -28,6 +28,9 @@ df_NES = pd.DataFrame({
     ]
 })
 
+
+
+
 app_ui = ui.page_fluid(
     browser_tools.get_browser_res(),
     ui.tags.link(href='styles.css', rel="stylesheet"),
@@ -38,7 +41,7 @@ app_ui = ui.page_fluid(
         id='horizontal-flex'
     )
 )
-def make_accordion_panels():
+def make_accordion_panels(game_id):
     ret_val = []
     for game_id in df_NES['id']:
         row = df_NES[df_NES['id']==game_id].iloc[0]
@@ -49,14 +52,7 @@ def make_accordion_panels():
                 ).add_class('green').add_style('width:100%;'),
                 ui.div(
                     ui.h2("About This Game:"),
-                    ui.div("Name:").add_class('main-content-title'),
-                    ui.div(row['Name']).add_class('main-content-body'),
-                    ui.div("Year:").add_class('main-content-title'),
-                    ui.div(row['Year']).add_class('main-content-body'),
-                    ui.div("Genre:").add_class('main-content-title'),
-                    ui.div(row['Genre']).add_class('main-content-body'),          
-                    ui.div("Description:").add_class('main-content-title'),
-                    ui.div(row['Description']).add_class('main-content-body'),    
+                    shiny_modules.game_details_ui(game_id,game_id),
                 ).add_class('red'),  
                 value=row['Name'],
             )
@@ -74,12 +70,14 @@ def server(input, output, session):
     # state info about what is currently selected
     selected_game=reactive.value(None)
 
-    #ser up server modules for widw-view server cards
-    [pill_module.module_server(id='wide_'+game_id, game_id=game_id, selected_game=selected_game) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])]
+    #set up server modules for wide-view server cards
+    [shiny_modules.pill_server(id='wide_'+game_id, game_id=game_id, selected_game=selected_game) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])]
 
+    #set up server modules for game details sections
+    [shiny_modules.game_details_server(id=game_id, game_id=game_id, df=df_NES) for game_id, in df_NES['id']]
 
     @reactive.effect
-    @reactive.event(browser_res)
+    @reactive.event(browser_res, selected_game)
     def render_body():
         if browser_res()[0]>=677:
             ui.remove_ui("#wide-ui-placeholder")
@@ -90,19 +88,12 @@ def server(input, output, session):
                 ui= ui.div(
                     ui.row(
                         ui.column(5,
-                            [pill_module.module_ui(id='wide_'+game_id, game_name=game_name) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])],                  
+                            [shiny_modules.pill_ui(id='wide_'+game_id, game_name=game_name) for game_id, game_name in zip(df_NES['id'],df_NES['Name'])],                  
                         ),
                         ui.column(7,
                             ui.div(
                                 ui.h2("About This Game:"),
-                                ui.div("Name:").add_class('main-content-title'),
-                                ui.output_text(id='txtName').add_class('main-content-body'),
-                                ui.div("Year:").add_class('main-content-title'),
-                                ui.output_text(id='txtYear').add_class('main-content-body'),
-                                ui.div("Genre:").add_class('main-content-title'),
-                                ui.output_text(id='txtGenre').add_class('main-content-body'),            
-                                ui.div("Description:").add_class('main-content-title'),
-                                ui.output_text(id='txtDescription').add_class('main-content-body'),    
+                                shiny_modules.game_details_ui(selected_game(),selected_game()),
                             ),        
                         ).add_class('red'),
                     ).add_class('blue'),
@@ -116,43 +107,10 @@ def server(input, output, session):
                 selector=f"#dynamic-ui-placeholder", 
                 where="afterBegin", # nest inside 'dynamic-ui-placeholder' element
                 ui= ui.div(
-                    ui.accordion(*make_accordion_panels(), id="acc_single", multiple=False).add_class('green'),
+                    ui.accordion(*make_accordion_panels(selected_game()), id="acc_single", multiple=False).add_class('green'),
                     id='narrow-ui-placeholder'
                 )
             )
-
-    @reactive.calc
-    def get_game_record_from_id():
-        return df_NES[df_NES['id']==selected_game()].iloc[0]
-
-
-    @render.text
-    def txtName():
-        ret_val = None
-        if selected_game():
-            ret_val = get_game_record_from_id()['Name']
-        return ret_val
-
-    @render.text
-    def txtGenre():
-        ret_val = None
-        if selected_game():        
-            ret_val = get_game_record_from_id()['Genre']
-        return ret_val
-
-    @render.text
-    def txtYear():
-        ret_val = None
-        if selected_game():        
-            ret_val = get_game_record_from_id()['Year']
-        return ret_val
-
-    @render.text
-    def txtDescription():
-        ret_val = None
-        if selected_game():
-            ret_val = get_game_record_from_id()['Description']
-        return ret_val
 
 
 app_dir = Path(__file__).parent
