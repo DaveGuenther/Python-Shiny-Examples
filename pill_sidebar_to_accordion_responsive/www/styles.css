@@ -1,6 +1,6 @@
 #horizontal-flex {
     display:flex;
-        
+    justify-content: center;
 }
 
 #dynamic-ui-placeholder {
