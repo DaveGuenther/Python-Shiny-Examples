@@ -1,3 +1,5 @@
+# This example is adapted from a stack exchange post intended for the RShiny framework:
+# https://stackoverflow.com/questions/36995142/get-the-size-of-the-window-in-shiny
 from shiny import ui
 
 def get_browser_res():
